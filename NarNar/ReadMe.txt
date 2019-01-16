@@ -17,7 +17,7 @@ server Customer Get()
 	};
 }
 
-client void Main()
+client static void Main()
 {
 	var cust = Get();
 

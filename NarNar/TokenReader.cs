@@ -23,10 +23,23 @@ namespace NarNar
             {
                 if(i < source.Length && source[i] == '/' && source[i+1] == '/')
                 {
-                    int x;
-                    for (x = i; x < source.Length && source[x] != '\r' || source[x] != '\n'; x++)
+                    int x = i;
+                    
+                    for(; ; )
                     {
-                        // skip .
+
+
+                        if(x == source.Length)
+                        {
+                            break;
+                        }
+
+                        if(source[x] == '\r' || source[x] == '\n')
+                        {
+                            break;
+                        }
+
+                        x++;
                     }
                     i = x;
                     continue;
@@ -104,6 +117,20 @@ namespace NarNar
         public string Current { get { return Words[_pos]; } }
         public bool CanMoveNext { get { return _pos < Words.Length; } }
         public string Next { get { return Words[_pos + 1]; } }
+
+        public string NextNonWhite
+        {
+            get
+            {
+                for (int x = _pos + 1; x < Words.Length; x++)
+                {
+                    if (!string.IsNullOrWhiteSpace(Words[x]))
+                        return Words[x];
+                }
+
+                return string.Empty;
+            }
+        }
 
         public decimal GetValue()
         {

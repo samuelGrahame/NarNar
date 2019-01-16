@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,14 +28,14 @@ namespace NarNar
                         tokens.MoveNext();
                         AppendUntilReachesSameLevel(tokens, clientBuilder);
                     }
-                    else if (tokens.Current == "system")
+                    else if (tokens.Current == "server")
                     {
-                        if(tokens.Next == "class")
+                        if (tokens.NextNonWhite == "class")
                         {
                             tokens.MoveNext();
-                            AppendUntilReachesSameLevel(tokens, serverBuilder);
+                            AppendUntilReachesSameLevel(tokens, serverBuilder, clientBuilder);
                         }
-                        else if(tokens.Next == "void")
+                        else if (tokens.NextNonWhite == "void")
                         {
                             tokens.MoveNext();
                             AppendUntilReachesSameLevel(tokens, serverBuilder);
@@ -43,15 +44,35 @@ namespace NarNar
                         {
                             tokens.MoveNext();
 
-                            AppendUntilReachesSameLevel(tokens, serverBuilder, clientBuilder, true);
+                            AppendUntilReachesSameLevel(tokens, serverBuilder, clientBuilder, true, "// INSERT SOME SERVER SIDE FUNC");
                         }
+                    }
+                    else if (tokens.Current == "system")
+                    {
+                        tokens.MoveNext();
+                        AppendUntilReachesSameLevel(tokens, serverBuilder, clientBuilder);
                     }
                 }
             } while (tokens.MoveNext());
+
+
+            File.WriteAllText("client.cs", clientBuilder.ToString());
+            File.WriteAllText("server.cs", serverBuilder.ToString());
         }
 
         public void AppendUntilReachesSameLevel(TokenReader token, StringBuilder builderA, StringBuilder builderB = null, bool dontFillB = false, string toFill = "")
-        {            
+        {
+            if(builderA.Length != 0)
+                builderA.AppendLine();
+
+            if(builderB != null && builderB.Length != 0)
+            {
+                builderB.AppendLine();
+            }
+
+            if (string.IsNullOrWhiteSpace(token.Current))
+                token.MoveNext();
+            
             int level = 0;
             bool foundFirst = false;
             for (; ; )
@@ -73,18 +94,20 @@ namespace NarNar
                     {
                         if(!foundFirst || (foundFirst && token.Current == "{" && level == 1) || (foundFirst && token.Current == "}" && level == 0))
                         {
-                            builderB.AppendLine(token.Current);
+                            builderB.Append(token.Current);
 
                             //toFill
                             if (foundFirst && token.Current == "{" && level == 1)
                             {
-                                builderB.AppendLine(toFill);
+                                builderB.AppendLine();
+                                builderB.Append(toFill);
+                                builderB.AppendLine();
                             }
                         }
                     }
                     else
                     {
-                        builderB.AppendLine(token.Current);
+                        builderB.Append(token.Current);
                     }
                 }               
                 
@@ -98,6 +121,12 @@ namespace NarNar
                 {
                     break;
                 }
+            }
+
+            builderA.AppendLine();
+            if (builderB != null)
+            {
+                builderB.AppendLine();
             }
         }
 
